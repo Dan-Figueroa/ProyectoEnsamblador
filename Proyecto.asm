@@ -8,20 +8,30 @@ data SEGMENT
     msj3 db 0AH, 0DH, 'DAME EL TERCER NUMERO: $'
     msj4 db 0AH, 0DH, 'DAME EL CUARTO NUMERO: $'
     msj5 db 0AH, 0DH, 'DAME EL QUINTO NUMERO: $'
+    msj6 db 0Ah, 0Dh,'INGRESA EL PRIMER NUMERO (2 dígitos):$'
+    msj7 db 0Ah, 0Dh,'INGRESA OTRO NUMERO (2 dígitos):$'
+    msj8 db 0Ah, 0Dh,'LA SUMA DE LOS 2 NUMEROS ES: $'
+    msj9 db 0Ah, 0Dh,'LA RESTA DE LOS 2 NUMEROS ES: $'
+    msj10 db 0Ah, 0Dh,'LA MULTIPLICACION DE LOS 2 NUMEROS ES: $'
+    msj11 db 0Ah, 0Dh,'LA DIVISION DE LOS 2 NUMEROS ES: $'
     mayor_num1 db 0AH, 0DH, 'EL PRIMER NUMERO ES MAYOR. $'
     mayor_num2 db 0AH, 0DH, 'EL SEGUNDO NUMERO ES MAYOR. $'
     iguales db 0AH, 0DH, 'AMBOS NUMEROS SON IGUALES. $'
     msj_mayor db 0AH, 0DH, 'EL MAYOR NUMERO ES: $'
-    op db 0
-    op1 db 0
-    op2 db 0
-    op3 db 0
-    num1 db 0
-    num2 db 0
-    num3 db 0
-    num4 db 0
-    num5 db 0
-    mayor_actual db 0
+    division_error_msg db 'ERROR: No se puede dividir por cero!$', 0
+    op db ?
+    op1 db ?
+    op2 db ?
+    op3 db ?
+    num1 db ?
+    num2 db ?
+    num3 db ?
+    num4 db ?
+    num5 db ?
+    num6 dw ?           ; Número 1
+    num7 dw ?           ; Número 2
+    result dw ?         ; Resultado
+    mayor_actual db ?
 data ENDS
 
 imprimirMensaje MACRO mensaje ;macro para imprimir un mensaje
@@ -103,6 +113,67 @@ comparadorCinco MACRO
         mov dl, mayor_actual
         mov ah, 02h             ; Servicio para imprimir un carácter en DL
         int 21h
+ENDM
+
+read_two_digit_number MACRO numeros
+    mov ah, 01h              ; Leer primer dígito
+    int 21h
+    sub al, '0'              ; Convertir a número
+    mov bl, al               ; Almacenar el primer dígito en BL
+    mov ah, 01h              ; Leer segundo dígito
+    int 21h
+    sub al, '0'              ; Convertir a número
+    mov bh, al               ; Almacenar el segundo dígito en BH
+    ; Combinar los dos dígitos en un número de 2 dígitos decimal
+    mov al, bl               ; Primer dígito en AL
+    mov ah, 0                ; Limpiar AH
+    mov cx, 10               ; Multiplicador de decenas
+    mul cx                   ; AL * 10
+    add al, bh               ; Sumar el segundo dígito
+    mov numeros, ax         ; Almacenar el resultado en la variable
+ENDM
+
+sumar MACRO 
+    CALL LEER_NUMEROS2
+    mov ax, num6
+    add ax, num7
+    mov result, ax
+    print_message msj8
+    call print_result
+    
+ENDM
+
+restar MACRO 
+    CALL LEER_NUMEROS2
+    mov ax, num6
+    sub ax, num7
+    mov result, ax
+    print_message msj9
+    call print_result
+ENDM
+
+multiplicar MACRO params
+    CALL LEER_NUMEROS2
+    mov ax, num6
+    mov bx, num7
+    mul bx
+    mov result, ax
+    print_message msj10
+    call print_result
+ENDM
+
+dividir MACRO 
+    CALL LEER_NUMEROS2
+    mov ax, num7
+    cmp ax, 0
+    JE DIVISION_ERROR
+    mov ax, num6
+    mov bx, num7
+    xor dx, dx              ; Limpiar DX antes de dividir
+    div bx
+    mov result, ax
+    print_message msj11
+    call print_result
 ENDM
 
 dibujoguante MACRO
@@ -3260,6 +3331,51 @@ codigo SEGMENT
             imprimirMensaje menu2
             leerNumero op2
 
+            convert_to_string PROC
+                mov bx, 10               ; Divisor para separar los dígitos
+                xor cx, cx               ; Limpiar CX para contar dígitos
+                mov ax, result           ; Cargar el resultado en AX
+
+                ; Comprobar si el resultado es cero
+                cmp ax, 0
+                je print_zero            ; Si es cero, imprimir '0' directamente
+
+                convert_loop:
+                    xor dx, dx               ; Limpiar DX antes de la división
+                    div bx                   ; AX = AX / 10; DX = AX % 10
+                    push dx                  ; Guardar el dígito en la pila
+                    inc cx                   ; Incrementar contador de dígitos
+                    test ax, ax              ; Comprobar si AX es cero
+                    jnz convert_loop         ; Continuar si no es cero
+
+                print_digits:
+                    pop dx                   ; Obtener el dígito de la pila
+                    add dl, '0'              ; Convertir el dígito a ASCII
+                    mov ah, 02h              ; Función de impresión de carácter
+                    int 21h                  ; Imprimir el carácter
+                    loop print_digits        ; Imprimir todos los dígitos
+                    ret
+
+                print_zero:
+                    mov dl, '0'              ; Si el resultado es cero, configurar '0'
+                    mov ah, 02h              ; Función de impresión de carácter
+                    int 21h                  ; Imprimir el carácter '0'
+                    ret
+            convert_to_string ENDP
+
+            print_result PROC
+                call convert_to_string    ; Llama a la rutina para imprimir el número como cadena
+                ret
+            print_result ENDP
+
+            LEER_NUMEROS2 PROC
+                imprimirMensaje msj6
+                read_two_digit_number num6
+                imprimirMensaje msj7
+                read_two_digit_number num7
+                RET
+            LEER_NUMEROS2 ENDP
+
             cmp op2, 1
             JNE NO_SUMA
             JMP NEAR PTR SUMA
@@ -3280,10 +3396,30 @@ codigo SEGMENT
             JMP NEAR PTR DIVISION
 
             NO_DIVISION:
-            cmp op, 5
-            JMP FIN
-
+            cmp op2, 5
             JMP MENUPRINCIPAL
+
+            SUMA:
+                sumar
+                JMP MENU
+
+            RESTA:
+                restar
+                JMP MENU
+
+            MULTIPLICACION:
+                multiplicar
+                JMP MENU
+
+            DIVISION:
+                dividir
+                JMP MENU
+
+            DIVISION_ERROR:
+                print_message division_error_msg
+                JMP MENU
+
+                JMP MENUPRINCIPAL
 
         MENUIMAGENES:
 
