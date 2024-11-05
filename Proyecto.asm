@@ -1,5 +1,5 @@
 data SEGMENT
-   menu db 0Ah, 0Dh, 'ELIGE UNA OPCION: 1.-COMPARACION DE NUMEROS 2.-OPERACIONES ARITMETICAS 3.-IMAGENES 4.-SALIR: $'
+    menu db 0Ah, 0Dh, 'ELIGE UNA OPCION: 1.-COMPARACION DE NUMEROS 2.-OPERACIONES ARITMETICAS 3.-IMAGENES 4.-SALIR: $'
     menu1 db 0Ah, 0Dh, 'ELIGE UNA OPCION: 1.-COMPARACION DE NUMEROS 2.-NUMERO MAYOR 3.-SALIR: $'
     menu2 db 0AH, 0Dh, 'ELIGE UNA OPCION: 1.-SUMA 2.-RESTA 3.-MULTIPLICACION 4.-DIVISION 5.-SALIR: $'
     menu3 db 0AH, 0Dh, 'ELIGE UNA OPCION: 1.-GUANTE 2.-TRINEO 3.-GORRITO 4.-SANTA 5.-SALIR: $'
@@ -138,9 +138,8 @@ sumar MACRO
     mov ax, num6
     add ax, num7
     mov result, ax
-    print_message msj8
+    imprimirMensaje msj8
     call print_result
-    
 ENDM
 
 restar MACRO 
@@ -148,7 +147,7 @@ restar MACRO
     mov ax, num6
     sub ax, num7
     mov result, ax
-    print_message msj9
+   imprimirMensaje msj9
     call print_result
 ENDM
 
@@ -158,7 +157,7 @@ multiplicar MACRO params
     mov bx, num7
     mul bx
     mov result, ax
-    print_message msj10
+    imprimirMensaje msj10
     call print_result
 ENDM
 
@@ -172,7 +171,7 @@ dividir MACRO
     xor dx, dx              ; Limpiar DX antes de dividir
     div bx
     mov result, ax
-    print_message msj11
+    imprimirMensaje msj11
     call print_result
 ENDM
 
@@ -3331,6 +3330,29 @@ codigo SEGMENT
             imprimirMensaje menu2
             leerNumero op2
 
+            cmp op2, 1
+            JNE NO_SUMA
+            JMP NEAR PTR SUMA
+
+            NO_SUMA:
+            cmp op2, 2
+            JNE NO_RESTA
+            JMP NEAR PTR RESTA
+
+            NO_RESTA:
+            cmp op2, 3
+            JNE NO_MULTIPLICACION
+            JMP NEAR PTR MULTIPLICACION
+
+            NO_MULTIPLICACION:
+            cmp op2, 4
+            JNE NO_DIVISION
+            JMP NEAR PTR DIVISION
+
+            NO_DIVISION:
+            cmp op2, 5
+            JMP MENUPRINCIPAL
+
             convert_to_string PROC
                 mov bx, 10               ; Divisor para separar los dígitos
                 xor cx, cx               ; Limpiar CX para contar dígitos
@@ -3376,50 +3398,25 @@ codigo SEGMENT
                 RET
             LEER_NUMEROS2 ENDP
 
-            cmp op2, 1
-            JNE NO_SUMA
-            JMP NEAR PTR SUMA
-
-            NO_SUMA:
-            cmp op2, 2
-            JNE NO_RESTA
-            JMP NEAR PTR RESTA
-
-            NO_RESTA:
-            cmp op2, 3
-            JNE NO_MULTIPLICACION
-            JMP NEAR PTR MULTIPLICACION
-
-            NO_MULTIPLICACION:
-            cmp op2, 4
-            JNE NO_DIVISION
-            JMP NEAR PTR DIVISION
-
-            NO_DIVISION:
-            cmp op2, 5
-            JMP MENUPRINCIPAL
-
             SUMA:
                 sumar
-                JMP MENU
+                JMP MENUOPERACIONES
 
             RESTA:
                 restar
-                JMP MENU
+                JMP MENUOPERACIONES
 
             MULTIPLICACION:
                 multiplicar
-                JMP MENU
+                JMP MENUOPERACIONES
 
             DIVISION:
                 dividir
-                JMP MENU
+                JMP MENUOPERACIONES
 
             DIVISION_ERROR:
-                print_message division_error_msg
-                JMP MENU
-
-                JMP MENUPRINCIPAL
+                imprimirMensaje division_error_msg
+                JMP MENUOPERACIONES
 
         MENUIMAGENES:
 
