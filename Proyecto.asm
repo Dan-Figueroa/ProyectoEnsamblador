@@ -3259,6 +3259,30 @@ codigo SEGMENT
         MENUOPERACIONES: 
             imprimirMensaje menu2
             leerNumero op2
+
+            cmp op2, 1
+            JNE NO_SUMA
+            JMP NEAR PTR SUMA
+
+            NO_SUMA:
+            cmp op2, 2
+            JNE NO_RESTA
+            JMP NEAR PTR RESTA
+
+            NO_RESTA:
+            cmp op2, 3
+            JNE NO_MULTIPLICACION
+            JMP NEAR PTR MULTIPLICACION
+
+            NO_MULTIPLICACION:
+            cmp op2, 4
+            JNE NO_DIVISION
+            JMP NEAR PTR DIVISION
+
+            NO_DIVISION:
+            cmp op, 5
+            JMP FIN
+
             JMP MENUPRINCIPAL
 
         MENUIMAGENES:
